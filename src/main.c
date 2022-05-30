@@ -8,10 +8,9 @@ int main(int argc, char *argv[]) {
 
     parse_args(argc, argv, &args);
 
-    bmp_t *bmp = create_bmp("assets/lado.bmp");
-
+    bmp_t *bmp = create_bmp(args.carrier);
     if (bmp == NULL) {
-        return EXIT_FAILURE;
+        return -1;
     }
 
     destroy_bmp(bmp);
