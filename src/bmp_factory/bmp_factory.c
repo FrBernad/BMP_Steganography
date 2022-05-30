@@ -3,9 +3,9 @@
 
 bmp_t *
 create_bmp(const char *file_name) {
-    int bmp_fd = open("assets/lado.bmp", O_RDONLY);
+    int bmp_fd = open(file_name, O_RDONLY);
     if (bmp_fd == -1) {
-        log_error("unable to open %s\n", "/assets/lado.bmp");
+        log_error("unable to open %s\n", file_name);
         return NULL;
     }
 
