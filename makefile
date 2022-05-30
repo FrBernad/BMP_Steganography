@@ -1,26 +1,26 @@
-# MAIN FILES
+# TARGET/MAIN FILES
 export TARGET := stegobmp
 MAIN := main
 
 # DIRECTORIES
 export SRC_DIR := $(CURDIR)/src
 
-
 # FILE EXTENSIONS
 export SRC_EXT := c
 export OBJ_EXT := o
 
-# FILES
+# SOURCE/OBJECT FILES
 export SRC_FILES := $(shell find $(SRC_DIR) -type f -name *.$(SRC_EXT) ! -name *$(MAIN).$(SRC_EXT))
 export OBJ_FILES := $(SRC_FILES:.$(SRC_EXT)=.$(OBJ_EXT)) $(MAIN).$(OBJ_EXT)
 
 # COMPILATION FLAGS
 STD :=-std=c99
-EXTRA_FLAGS := -g -fsanitize=address -pedantic -pedantic-errors
+DEBUG_MEMORY := -g -fsanitize=address -pedantic -pedantic-errors
+EXTRA_FLAGS := -DLOG_USE_COLOR
 #OPTIMIZATION := O3
 W_NO := -Wno-unused-parameter -Wno-newline-eof -Wno-implicit-fallthrough
 W := -Wextra -Werror -Wall
-export CFLAGS := $(W) $(W_NO) $(STD) $(EXTRA_FLAGS)
+export CFLAGS := $(W) $(W_NO) $(STD) $(EXTRA_FLAGS) $(DEBUG_MEMORY)
 
 # MAIN DIRECTIVES
 all:
