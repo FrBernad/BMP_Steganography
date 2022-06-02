@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "utils/args/args.h"
+#include "utils/logger/logger.h"
 #include "bmp_factory/bmp_factory.h"
 
 static struct stegobmp_args args;

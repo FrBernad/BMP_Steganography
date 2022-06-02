@@ -54,5 +54,6 @@ dkms.conf
 .DS_STORE
 
 .idea/
-src/stegobmp
 .vscode/
+
+src/stegobmp

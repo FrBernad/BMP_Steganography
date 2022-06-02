@@ -6,8 +6,6 @@
 #include <stdbool.h>
 #include <time.h>
 
-#define LOG_VERSION "0.1.0"
-
 typedef struct {
     va_list ap;
     const char *fmt;

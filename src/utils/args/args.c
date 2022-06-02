@@ -58,31 +58,33 @@ usage(char *progname) {
             "NAME\n"
             "\t%s – análisis y ocultación de información mediante esteganografía\n\n"
             "SYNOPSIS\n"
-            "\t%s -embed -in file -p bitmap_file -steg algorithm [-a algorithm] [-m mode] [-pass password]\n\n"
+            "\t%s -embed -in file -p in_file -out out_file -steg algorithm [-a algorithm] [-m mode] [-pass password]\n\n"
+            "\t%s -extract -p in_file -out out_file -steg algorithm [-a algorithm] [-m mode] [-pass password]\n\n"
             "DESCRIPTION\n"
             "\t%s permite ocultar un archivo cualquiera en un archivo .bmp, mediante un método de esteganografiado elegido, con o sin password.\n"
             "\tTambién permite estegoanaliczar un archivo .bmp para determinar si tiene un archivo incrustado, con qué algoritmo y lo extraiga correctamente.\n\n"
             "\t-embed                 Indica que se va a ocultar información.\n\n"
+            "\t-extract               Indica que se va a extraer información.\n"
             "\t-in file               Archivo que se va a ocultar.\n\n"
-            "\t-p bitmap_file         Archivo bmp que será el portador.\n\n"
-            "\t-out bitmap_file       Archivo bmp de salida, es decir, el archivo bitmapfile\n"
-            "\t                       con la información de file incrustada.\n\n"
+            "\t-p bitmap_file          Archivo bmp que será el portador.\n\n"
+            "\t-out bitmap_file       Archivo bmp de salida\n"
+            "\t                        con la información de file incrustada.\n\n"
             "\t-steg algorithm        Algoritmo de esteganografiado, valores posibles:\n"
-            "\t                         -   LSB1: LSB de 1bit\n"
-            "\t                         -   LSB4: LSB de 4 bits\n"
-            "\t                         -   LSBI: LSB Enhanced\n"
-            "\t-a algorithm           Algoritmo de encripcion, valores posibles:\n"
-            "\t                         -   aes128\n"
-            "\t                         -   aes192\n"
-            "\t                         -   aes256\n"
-            "\t                         -   des\n"
-            "\t-m mode                Modo de encadenamiento, valores posibles:\n"
-            "\t                         -   ecb\n"
-            "\t                         -   cfb\n"
-            "\t                         -   ofb\n"
-            "\t                         -   cbc\n"
+            "\t                        -   LSB1: LSB de 1bit\n"
+            "\t                        -   LSB4: LSB de 4 bits\n"
+            "\t                        -   LSBI: LSB Enhanced\n"
+            "\t-a algorithm            Algoritmo de encripcion, valores posibles:\n"
+            "\t                        -   aes128\n"
+            "\t                        -   aes192\n"
+            "\t                        -   aes256\n"
+            "\t                        -   des\n"
+            "\t-m mode                 Modo de encadenamiento, valores posibles:\n"
+            "\t                        -   ecb\n"
+            "\t                        -   cfb\n"
+            "\t                        -   ofb\n"
+            "\t                        -   cbc\n"
             "\t-pass password         Password de encripción\n\n",
-            progname, progname, progname);
+            progname, progname, progname, progname);
 
     exit(1);
 }
@@ -100,10 +102,10 @@ void parse_args(int argc, char **argv, struct stegobmp_args *args) {
                 {"out",     required_argument, 0, 0xD003},
                 {"steg",    required_argument, 0, 0xD004},
                 {"pass",    required_argument, 0, 0xD005},
-                {"extract", required_argument, 0, 0xD006},
+                {"extract", no_argument,       0, 0xD006},
                 {0, 0,                         0, 0}};
 
-        c = getopt_long(argc, argv, "p:a:m:vh", long_options, &option_index);
+        c = getopt_long_only(argc, argv, "p:a:m:vh", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -154,4 +156,47 @@ void parse_args(int argc, char **argv, struct stegobmp_args *args) {
         fprintf(stderr, "\n");
         exit(1);
     }
+
+    if (!args->embed && !args->extract) {
+        fprintf(stderr, "either '-extract' or '-embed' arguments must be specified.\n");
+        exit(1);
+    }
+
+    if (args->embed) {
+        if (!args->in_file || !args->carrier || !args->out_file || !args->steg) {
+            fprintf(stderr, "embed missing required arguments:");
+            if (!args->in_file) {
+                fprintf(stderr, "-in ");
+            }
+            if (!args->carrier) {
+                fprintf(stderr, "-p ");
+            }
+            if (!args->out_file) {
+                fprintf(stderr, "-out ");
+            }
+            if (!args->steg) {
+                fprintf(stderr, "-steg ");
+            }
+            fprintf(stderr, "\n");
+            exit(1);
+        }
+    } else {
+        if (!args->carrier) {
+            if (!args->in_file || !args->carrier || !args->out_file || !args->steg) {
+                fprintf(stderr, "extract missing required arguments:");
+                if (!args->carrier) {
+                    fprintf(stderr, "-p ");
+                }
+                if (!args->out_file) {
+                    fprintf(stderr, "-out ");
+                }
+                if (!args->steg) {
+                    fprintf(stderr, "-steg ");
+                }
+                fprintf(stderr, "\n");
+                exit(1);
+            }
+        }
+    }
+
 }
