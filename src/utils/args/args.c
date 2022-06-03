@@ -1,9 +1,37 @@
 #include "utils/args/args.h"
+#include "utils/logger/logger.h"
 
 #include <getopt.h>
 #include <stdio.h>  /* for printf */
 #include <stdlib.h> /* for exit */
 #include <string.h> /* memset */
+
+static const char *steg_strings[] = {
+        "LSB1", "LSB4", "LSBI"
+};
+
+static const char *enc_strings[] = {
+        "AES_128", "AES_192", "AES_256", "DES"
+};
+
+static const char *chain_mode_strings[] = {
+        "ECB", "CFB", "OFB", "CBC"
+};
+
+const char *
+steg_string(int steg) {
+    return steg_strings[steg];
+}
+
+const char *
+enc_string(int enc) {
+    return enc_strings[enc];
+}
+
+const char *
+chain_mode_string(int chain_mode) {
+    return chain_mode_strings[chain_mode];
+}
 
 static enc_t
 get_enc(char *enc) {
@@ -91,6 +119,7 @@ usage(char *progname) {
 
 void parse_args(int argc, char **argv, struct stegobmp_args *args) {
     memset(args, 0, sizeof(*args));
+    log_set_quiet(true);
 
     int c;
 
@@ -103,6 +132,7 @@ void parse_args(int argc, char **argv, struct stegobmp_args *args) {
                 {"steg",    required_argument, 0, 0xD004},
                 {"pass",    required_argument, 0, 0xD005},
                 {"extract", no_argument,       0, 0xD006},
+                {"log",     no_argument,       0, 0xD007},
                 {0, 0,                         0, 0}};
 
         c = getopt_long_only(argc, argv, "p:a:m:vh", long_options, &option_index);
@@ -143,11 +173,16 @@ void parse_args(int argc, char **argv, struct stegobmp_args *args) {
             case 0xD006:
                 args->extract = true;
                 break;
+            case 0xD007:
+                log_set_quiet(false);
+                log_debug("logs enabled\n");
+                break;
             default:
                 fprintf(stderr, "unknown argument %d.\n", c);
                 exit(1);
         }
     }
+
     if (optind < argc) {
         fprintf(stderr, "argument not accepted: ");
         while (optind < argc) {
@@ -199,4 +234,25 @@ void parse_args(int argc, char **argv, struct stegobmp_args *args) {
         }
     }
 
+    log_debug("arguments parsed successfully\n"
+           "arguments:\n"
+           "\tembed: %s\n"
+           "\textract: %s\n"
+           "\tin_file: %s\n"
+           "\tcarrier: %s\n"
+           "\tout_file: %s\n"
+           "\tsteg: %s\n"
+           "\tenc: %s\n"
+           "\tmode: %s\n"
+           "\tpass: %s\n",
+           args->embed ? "true" : "false",
+           args->extract ? "true" : "false",
+           args->in_file ? args->in_file : "None",
+           args->carrier,
+           args->out_file,
+           steg_string(args->steg),
+           enc_string(args->enc),
+           chain_mode_strings[args->mode],
+           args->pass ? args->pass : "None"
+    );
 }

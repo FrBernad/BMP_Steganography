@@ -43,4 +43,14 @@ struct stegobmp_args {
 void
 parse_args(int argc, char **argv, struct stegobmp_args *args);
 
+const char *
+steg_string(int steg);
+
+const char *
+enc_string(int enc);
+
+const char *
+chain_mode_string(int chain_mode);
+
+
 #endif

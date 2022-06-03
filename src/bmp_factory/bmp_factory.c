@@ -1,4 +1,4 @@
-#include "bmp_factory.h"
+#include "bmp_factory/bmp_factory.h"
 #include "utils/logger/logger.h"
 
 bmp_t *
