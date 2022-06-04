@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     if (bmp == NULL) {
         return -1;
     }
-
+    //FIXME: GOTO JUAN
     I_O_resources_t resources;
     open_I_O_resources(&resources, args);
 
@@ -27,6 +27,9 @@ int main(int argc, char *argv[]) {
         }
     } else {
         if (extract(args.steg, bmp, resources) < 0) {
+            return -1;
+        }
+        if (generate_extracted_file(resources.extracted_data) < 0) {
             return -1;
         }
     }

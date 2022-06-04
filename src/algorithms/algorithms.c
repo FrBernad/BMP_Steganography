@@ -1,4 +1,3 @@
-#include <sys/stat.h>
 #include <stdio.h>
 #include "algorithms/algorithms.h"
 
@@ -65,6 +64,7 @@ LSB1_embed(bmp_t *bmp, I_O_resources_t resources) {
     for (uint32_t i = 0, k = 0; i < stego_data->size; ++i) {
         uint8_t current_byte = stego_data->data[i];
         for (int j = 7; j >= 0; --j) {
+            bmp->pixel_array[k] |= 0x01;
             bmp->pixel_array[k] &= (((current_byte >> j) & 0x01) | 0xFE);
             k++;
         }
@@ -75,36 +75,48 @@ LSB1_embed(bmp_t *bmp, I_O_resources_t resources) {
 
 static int
 LSB1_extract(bmp_t *bmp, I_O_resources_t resources) {
+
     // Extract size of the file
-    //4D 01 00 00
-    //01001101 00000001 00000000 00000000
-
-    //00 00 01 4D
-    //00000000 00000000 00000001 01001101
-
     uint32_t real_size_bytes = 8 * sizeof(uint32_t) / LSB1_BITS;
     uint32_t real_size = 0;
-    for (uint32_t i = 0, k = 0, j = 7; i < real_size_bytes; ++i) {
-        real_size |= (((uint32_t) (bmp->pixel_array[i] & 0x01)) << (8 * k + j));
+    for (uint32_t i = 0, k = 0, j = 8; i < real_size_bytes; ++i) {
+        real_size |= (((uint32_t) (bmp->pixel_array[i] & 0x01)) << (8 * k + (j - 1)));
         j--;
         if (j == 0) {
             k++;
-            j = 7;
+            j = 8;
         }
     }
-    printf("%d", real_size);
-//
-//    uint8_t real_sizeA[4] = {0};
-//    uint8_t * currentByte;
-//
-//    for (uint32_t i = 0; i < 4; ++i) {
-//        currentByte = real_sizeA + i ;
-//        for (int j = 0; j < 8; ++j) {
-//            *currentByte |= bmp->pixel_array[j] & 0x01;
-//            *curentByte<<=1
-//        }
-//
-//    }
+
+    // Extract content of the file
+
+    uint32_t real_body_bytes = 8 * real_size / LSB1_BITS;
+    uint8_t *body_ptr = bmp->pixel_array + real_size_bytes;
+    init_extracted_data(real_size, resources.extracted_data);
+    for (uint32_t i = 0, k = 0, j = 8; i < real_body_bytes; i++) {
+        resources.extracted_data->body[k] |= ((uint8_t) (body_ptr[i] & 0x01)) << (j - 1);
+        j--;
+        if (j == 0) {
+            k++;
+            j = 8;
+        }
+    }
+
+    // Extract extension of the file
+    uint8_t *ext = body_ptr + real_body_bytes;
+    uint8_t parsed_ext = 0;
+
+    for (uint32_t i = 0, k = 0, j = 8; !parsed_ext; i++) {
+        resources.extracted_data->extension[k] |= ((uint8_t) (ext[i] & 0x01)) << (j - 1);
+        j--;
+        if (j == 0) {
+            if (resources.extracted_data->extension[k] == 0) {
+                parsed_ext = 1;
+            }
+            k++;
+            j = 8;
+        }
+    }
 
     return 1;
 }

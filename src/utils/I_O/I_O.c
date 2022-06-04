@@ -9,6 +9,8 @@
 #include "bmp_factory/bmp_factory.h"
 
 #define REAL_SIZE_BYTES 4
+#define MAX_EXTENSION_SIZE 10
+#define MAX_FILENAME_SIZE 30
 
 static const char *
 get_filename_ext(const char *filename);
@@ -20,15 +22,16 @@ int
 open_I_O_resources(I_O_resources_t *resources, stegobmp_args_t args) {
     resources->out_fd = -1;
     resources->stego_data = NULL;
-
-    int out_file_fd = open(args.out_file, O_RDWR | O_CREAT | O_TRUNC, 0775);
-    if (out_file_fd == -1) {
-        log_error("Unable to create out file %s", args.out_file);
-        return -1;
-    }
-    resources->out_fd = out_file_fd;
+    resources->extracted_data = NULL;
 
     if (args.embed) {
+        int out_file_fd = open(args.out_file, O_RDWR | O_CREAT | O_TRUNC, 0775);
+        if (out_file_fd == -1) {
+            log_error("Unable to create out file %s", args.out_file);
+            return -1;
+        }
+        resources->out_fd = out_file_fd;
+
         int in_file_fd = open(args.in_file, O_RDONLY);
         if (in_file_fd == -1) {
             close_I_O_resources(resources);
@@ -42,7 +45,7 @@ open_I_O_resources(I_O_resources_t *resources, stegobmp_args_t args) {
 
         resources->stego_data = calloc(1, sizeof(stego_data_t));
         if (resources->stego_data == NULL) {
-            log_error("memory error");
+            log_error("memory allocation error");
             close_I_O_resources(resources);
             return -1;
         }
@@ -75,6 +78,27 @@ open_I_O_resources(I_O_resources_t *resources, stegobmp_args_t args) {
         memcpy(resources->stego_data->data + REAL_SIZE_BYTES + file_size, extension, sizeof(uint8_t) * extension_size);
 
         close(in_file_fd);
+    } else {
+        resources->extracted_data = calloc(1, sizeof(extracted_data_t));
+        if (resources->extracted_data == NULL) {
+            log_error("memory allocation error");
+            return -1;
+        }
+
+        resources->extracted_data->extension = calloc(MAX_EXTENSION_SIZE, sizeof(uint8_t));
+        if (resources->extracted_data->extension == NULL) {
+            close_I_O_resources(resources);
+            log_error("memory allocation error");
+            return -1;
+        }
+
+        resources->extracted_data->file_name = malloc(MAX_FILENAME_SIZE * sizeof(uint8_t));
+        if (resources->extracted_data->extension == NULL) {
+            close_I_O_resources(resources);
+            log_error("memory allocation error");
+            return -1;
+        }
+        strcpy((char *) resources->extracted_data->file_name, args.out_file);
     }
 
     return 1;
@@ -99,6 +123,33 @@ generate_embedded_bmp(bmp_t *bmp, I_O_resources_t resources) {
     return 1;
 }
 
+int
+generate_extracted_file(extracted_data_t *extracted_data) {
+    char *extracted_filename = strcat((char *) extracted_data->file_name, (char *) extracted_data->extension);
+    int out_file_fd = open(extracted_filename, O_RDWR | O_CREAT | O_TRUNC, 0775);
+    if (out_file_fd == -1) {
+        log_error("Unable to create out file %s", extracted_filename);
+        return -1;
+    }
+    if (write(out_file_fd, extracted_data->body, extracted_data->body_size) < 0) {
+        log_error("unable to write output file body");
+        return -1;
+    }
+
+    return 1;
+}
+
+int
+init_extracted_data(uint32_t size, extracted_data_t *extracted_data) {
+    extracted_data->body_size = size;
+    extracted_data->body = calloc(size, sizeof(uint8_t));
+    if (extracted_data->body == NULL) {
+        log_error("memory allocation error");
+        return -1;
+    }
+
+    return 1;
+}
 
 void
 close_I_O_resources(I_O_resources_t *resources) {
@@ -111,6 +162,18 @@ close_I_O_resources(I_O_resources_t *resources) {
             free(resources->stego_data->data);
         }
         free(resources->stego_data);
+    }
+
+    if (resources->extracted_data) {
+        if (resources->extracted_data->body) {
+            free(resources->extracted_data->body);
+        }
+        if (resources->extracted_data->extension) {
+            free(resources->extracted_data->extension);
+        }
+        if (resources->extracted_data->file_name) {
+            free(resources->extracted_data->file_name);
+        }
     }
 }
 
