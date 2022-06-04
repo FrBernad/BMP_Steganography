@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/fcntl.h>
 #include "bmp_factory/bmp_factory.h"
 #include "utils/logger/logger.h"
 
@@ -10,7 +13,7 @@ create_bmp(const char *file_name) {
     }
 
     bmp_t *bmp = calloc(1, sizeof(bmp_t));
-    if (bmp == 0) {
+    if (bmp == NULL) {
         close(bmp_fd);
         log_error("memory allocation error");
         return NULL;
@@ -18,22 +21,28 @@ create_bmp(const char *file_name) {
 
     if (read(bmp_fd, &bmp->file_header, BMP_FILE_HEADER_SIZE) < 0) {
         close(bmp_fd);
-        destroy_bmp(bmp);
+        free_bmp(bmp);
         log_error("error reading file header");
         return NULL;
     }
 
     if (read(bmp_fd, &bmp->info_header, BMP_INFO_HEADER_SIZE) < 0) {
         close(bmp_fd);
-        destroy_bmp(bmp);
+        free_bmp(bmp);
         log_error("error reading info header");
         return NULL;
     }
 
     bmp->pixel_array = malloc(bmp->info_header.image_size * sizeof(uint8_t));
+    if (bmp->pixel_array == NULL) {
+        close(bmp_fd);
+        free_bmp(bmp);
+        return NULL;
+    }
+
     if (read(bmp_fd, bmp->pixel_array, bmp->info_header.image_size) < 0) {
         close(bmp_fd);
-        destroy_bmp(bmp);
+        free_bmp(bmp);
         log_error("error reading pixel array");
         return NULL;
     }
@@ -44,7 +53,9 @@ create_bmp(const char *file_name) {
 }
 
 void
-destroy_bmp(bmp_t *bmp) {
-    free(bmp->pixel_array);
+free_bmp(bmp_t *bmp) {
+    if (bmp->pixel_array) {
+        free(bmp->pixel_array);
+    }
     free(bmp);
 }

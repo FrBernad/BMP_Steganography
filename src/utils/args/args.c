@@ -19,12 +19,12 @@ static const char *chain_mode_strings[] = {
 };
 
 const char *
-steg_string(int steg) {
+steg_algorithm_string(int steg) {
     return steg_strings[steg];
 }
 
 const char *
-enc_string(int enc) {
+enc_algorithm_string(int enc) {
     return enc_strings[enc];
 }
 
@@ -33,7 +33,7 @@ chain_mode_string(int chain_mode) {
     return chain_mode_strings[chain_mode];
 }
 
-static enc_t
+static enc_algorithm_t
 get_enc(char *enc) {
     if (strcmp("aes128", enc) == 0) {
         return AES_128;
@@ -63,7 +63,7 @@ get_mode(char *enc) {
     return -1;
 }
 
-static steg_t
+static steg_algorithm_t
 get_steg(char *enc) {
     if (strcmp("LSB1", enc) == 0) {
         return LSB1;
@@ -86,8 +86,8 @@ usage(char *progname) {
             "NAME\n"
             "\t%s – análisis y ocultación de información mediante esteganografía\n\n"
             "SYNOPSIS\n"
-            "\t%s -embed -in file -p in_file -out out_file -steg algorithm [-a algorithm] [-m mode] [-pass password]\n\n"
-            "\t%s -extract -p in_file -out out_file -steg algorithm [-a algorithm] [-m mode] [-pass password]\n\n"
+            "\t%s -embed -in file -p in_file -out out_file -steg_algorithm steg_algorithm [-a steg_algorithm] [-m mode] [-pass password]\n\n"
+            "\t%s -extract -p in_file -out out_file -steg_algorithm steg_algorithm [-a steg_algorithm] [-m mode] [-pass password]\n\n"
             "DESCRIPTION\n"
             "\t%s permite ocultar un archivo cualquiera en un archivo .bmp, mediante un método de esteganografiado elegido, con o sin password.\n"
             "\tTambién permite estegoanaliczar un archivo .bmp para determinar si tiene un archivo incrustado, con qué algoritmo y lo extraiga correctamente.\n\n"
@@ -97,11 +97,11 @@ usage(char *progname) {
             "\t-p bitmap_file          Archivo bmp que será el portador.\n\n"
             "\t-out bitmap_file       Archivo bmp de salida\n"
             "\t                        con la información de file incrustada.\n\n"
-            "\t-steg algorithm        Algoritmo de esteganografiado, valores posibles:\n"
+            "\t-steg_algorithm steg_algorithm        Algoritmo de esteganografiado, valores posibles:\n"
             "\t                        -   LSB1: LSB de 1bit\n"
             "\t                        -   LSB4: LSB de 4 bits\n"
             "\t                        -   LSBI: LSB Enhanced\n"
-            "\t-a algorithm            Algoritmo de encripcion, valores posibles:\n"
+            "\t-a steg_algorithm            Algoritmo de encripcion, valores posibles:\n"
             "\t                        -   aes128\n"
             "\t                        -   aes192\n"
             "\t                        -   aes256\n"
@@ -117,7 +117,7 @@ usage(char *progname) {
     exit(1);
 }
 
-void parse_args(int argc, char **argv, struct stegobmp_args *args) {
+void parse_args(int argc, char **argv, stegobmp_args_t *args) {
     memset(args, 0, sizeof(*args));
     log_set_quiet(true);
 
@@ -129,7 +129,7 @@ void parse_args(int argc, char **argv, struct stegobmp_args *args) {
                 {"embed",   no_argument,       0, 0xD001},
                 {"in",      required_argument, 0, 0xD002},
                 {"out",     required_argument, 0, 0xD003},
-                {"steg",    required_argument, 0, 0xD004},
+                {"steg_algorithm",    required_argument, 0, 0xD004},
                 {"pass",    required_argument, 0, 0xD005},
                 {"extract", no_argument,       0, 0xD006},
                 {"log",     no_argument,       0, 0xD007},
@@ -210,7 +210,7 @@ void parse_args(int argc, char **argv, struct stegobmp_args *args) {
                 fprintf(stderr, "-out ");
             }
             if (!args->steg) {
-                fprintf(stderr, "-steg ");
+                fprintf(stderr, "-steg_algorithm ");
             }
             fprintf(stderr, "\n");
             exit(1);
@@ -226,7 +226,7 @@ void parse_args(int argc, char **argv, struct stegobmp_args *args) {
                     fprintf(stderr, "-out ");
                 }
                 if (!args->steg) {
-                    fprintf(stderr, "-steg ");
+                    fprintf(stderr, "-steg_algorithm ");
                 }
                 fprintf(stderr, "\n");
                 exit(1);
@@ -235,24 +235,24 @@ void parse_args(int argc, char **argv, struct stegobmp_args *args) {
     }
 
     log_debug("arguments parsed successfully\n"
-           "arguments:\n"
-           "\tembed: %s\n"
-           "\textract: %s\n"
-           "\tin_file: %s\n"
-           "\tcarrier: %s\n"
-           "\tout_file: %s\n"
-           "\tsteg: %s\n"
-           "\tenc: %s\n"
-           "\tmode: %s\n"
-           "\tpass: %s\n",
-           args->embed ? "true" : "false",
-           args->extract ? "true" : "false",
-           args->in_file ? args->in_file : "None",
-           args->carrier,
-           args->out_file,
-           steg_string(args->steg),
-           enc_string(args->enc),
-           chain_mode_strings[args->mode],
-           args->pass ? args->pass : "None"
+              "arguments:\n"
+              "\tembed: %s\n"
+              "\textract: %s\n"
+              "\tin_file: %s\n"
+              "\tcarrier: %s\n"
+              "\tout_file: %s\n"
+              "\tsteg_algorithm: %s\n"
+              "\tenc: %s\n"
+              "\tmode: %s\n"
+              "\tpass: %s\n",
+              args->embed ? "true" : "false",
+              args->extract ? "true" : "false",
+              args->in_file ? args->in_file : "None",
+              args->carrier,
+              args->out_file,
+              steg_algorithm_string(args->steg),
+              enc_algorithm_string(args->enc),
+              chain_mode_strings[args->mode],
+              args->pass ? args->pass : "None"
     );
 }

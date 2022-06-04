@@ -2,9 +2,6 @@
 #define _BMP_FACTORY_H
 
 #include <stdint.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 typedef enum {
     BMP_FILE_HEADER_SIZE = 14,
@@ -44,6 +41,6 @@ bmp_t *
 create_bmp(const char *file_name);
 
 void
-destroy_bmp(bmp_t *bmp);
+free_bmp(bmp_t *bmp);
 
 #endif
