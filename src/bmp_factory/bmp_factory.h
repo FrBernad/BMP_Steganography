@@ -30,10 +30,11 @@ typedef struct bmp_info_header {
     uint32_t clr_important;
 } bmp_info_header_t;
 
-
 typedef struct bmp {
     bmp_file_header_t file_header;
+    uint8_t *raw_file_header;
     bmp_info_header_t info_header;
+    uint8_t *raw_info_header;
     uint8_t *pixel_array;
 } bmp_t;
 

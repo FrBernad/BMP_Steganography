@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/fcntl.h>
+#include <string.h>
 #include "bmp_factory/bmp_factory.h"
 #include "utils/logger/logger.h"
 
@@ -19,22 +20,39 @@ create_bmp(const char *file_name) {
         return NULL;
     }
 
-    if (read(bmp_fd, &bmp->file_header, BMP_FILE_HEADER_SIZE) < 0) {
+    bmp->raw_file_header = malloc(sizeof(uint8_t) * BMP_FILE_HEADER_SIZE);
+    if (bmp->raw_file_header == NULL) {
+        close(bmp_fd);
+        free_bmp(bmp);
+        log_error("memory allocation error");
+        return NULL;
+    }
+    if (read(bmp_fd, bmp->raw_file_header, BMP_FILE_HEADER_SIZE) < 0) {
         close(bmp_fd);
         free_bmp(bmp);
         log_error("error reading file header");
         return NULL;
     }
+    memcpy(&bmp->file_header, bmp->raw_file_header, BMP_FILE_HEADER_SIZE);
 
-    if (read(bmp_fd, &bmp->info_header, BMP_INFO_HEADER_SIZE) < 0) {
+    bmp->raw_info_header = malloc(sizeof(uint8_t) * BMP_INFO_HEADER_SIZE);
+    if (bmp->raw_info_header == NULL) {
+        close(bmp_fd);
+        free_bmp(bmp);
+        log_error("memory allocation error");
+        return NULL;
+    }
+    if (read(bmp_fd, bmp->raw_info_header, BMP_INFO_HEADER_SIZE) < 0) {
         close(bmp_fd);
         free_bmp(bmp);
         log_error("error reading info header");
         return NULL;
     }
+    memcpy(&bmp->info_header, bmp->raw_info_header, BMP_INFO_HEADER_SIZE);
 
     bmp->pixel_array = malloc(bmp->info_header.image_size * sizeof(uint8_t));
     if (bmp->pixel_array == NULL) {
+        log_error("memory error");
         close(bmp_fd);
         free_bmp(bmp);
         return NULL;
@@ -56,6 +74,12 @@ void
 free_bmp(bmp_t *bmp) {
     if (bmp->pixel_array) {
         free(bmp->pixel_array);
+    }
+    if (bmp->raw_file_header) {
+        free(bmp->raw_file_header);
+    }
+    if (bmp->raw_info_header) {
+        free(bmp->raw_info_header);
     }
     free(bmp);
 }

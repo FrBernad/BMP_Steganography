@@ -26,8 +26,8 @@ LSBI_embed(bmp_t *bmp, I_O_resources_t resources);
 static int
 LSBI_extract(bmp_t *bmp, I_O_resources_t resources);
 
-static uint64_t
-check_size(uint8_t bits_per_byte, uint32_t bmp_size, file_t *in_file);
+static uint32_t
+get_required_bytes(uint8_t bits_per_byte, uint32_t bmp_size, uint32_t file_size);
 
 static int (*embed_algorithms[3])(bmp_t *bmp, I_O_resources_t resources) = {
         LSB1_embed, LSB4_embed, LSBI_embed
@@ -46,25 +46,74 @@ int
 extract(steg_algorithm_t algorithm, bmp_t *bmp, I_O_resources_t resources) {
     return extract_algorithms[algorithm](bmp, resources);
 }
+// IN_FILE
+//    11110000
+// CARRIER
+//    00001111
+//    00000001
+//    11111111
+//    00000000
 
 static int
 LSB1_embed(bmp_t *bmp, I_O_resources_t resources) {
-
-    if (!check_size(LSB1_BITS, bmp->file_header.size, resources.in_file)) {
+    stego_data_t *stego_data = resources.stego_data;
+    uint32_t required_bytes = get_required_bytes(LSB1_BITS, bmp->info_header.image_size, stego_data->size);
+    if (!required_bytes) {
         return -1;
     }
+
+    for (uint32_t i = 0, k = 0; i < stego_data->size; ++i) {
+        uint8_t current_byte = stego_data->data[i];
+        for (int j = 7; j >= 0; --j) {
+            bmp->pixel_array[k] &= (((current_byte >> j) & 0x01) | 0xFE);
+            k++;
+        }
+    }
+
     return 1;
 }
 
 static int
 LSB1_extract(bmp_t *bmp, I_O_resources_t resources) {
+    // Extract size of the file
+    //4D 01 00 00
+    //01001101 00000001 00000000 00000000
+
+    //00 00 01 4D
+    //00000000 00000000 00000001 01001101
+
+    uint32_t real_size_bytes = 8 * sizeof(uint32_t) / LSB1_BITS;
+    uint32_t real_size = 0;
+    for (uint32_t i = 0, k = 0, j = 7; i < real_size_bytes; ++i) {
+        real_size |= (((uint32_t) (bmp->pixel_array[i] & 0x01)) << (8 * k + j));
+        j--;
+        if (j == 0) {
+            k++;
+            j = 7;
+        }
+    }
+    printf("%d", real_size);
+//
+//    uint8_t real_sizeA[4] = {0};
+//    uint8_t * currentByte;
+//
+//    for (uint32_t i = 0; i < 4; ++i) {
+//        currentByte = real_sizeA + i ;
+//        for (int j = 0; j < 8; ++j) {
+//            *currentByte |= bmp->pixel_array[j] & 0x01;
+//            *curentByte<<=1
+//        }
+//
+//    }
+
     return 1;
 }
 
 static int
 LSB4_embed(bmp_t *bmp, I_O_resources_t resources) {
-
-    if (!check_size(LSB4_BITS, bmp->file_header.size, resources.in_file)) {
+    stego_data_t *stego_data = resources.stego_data;
+    uint32_t required_bytes = get_required_bytes(LSB4_BITS, bmp->info_header.image_size, stego_data->size);
+    if (!required_bytes) {
         return -1;
     }
     return 1;
@@ -77,8 +126,9 @@ LSB4_extract(bmp_t *bmp, I_O_resources_t resources) {
 
 static int
 LSBI_embed(bmp_t *bmp, I_O_resources_t resources) {
-
-    if (!check_size(LSBI_BITS, bmp->file_header.size, resources.in_file)) {
+    stego_data_t *stego_data = resources.stego_data;
+    uint32_t required_bytes = get_required_bytes(LSBI_BITS, bmp->info_header.image_size, stego_data->size);
+    if (!required_bytes) {
         return -1;
     }
     return 1;
@@ -89,13 +139,15 @@ LSBI_extract(bmp_t *bmp, I_O_resources_t resources) {
     return 1;
 }
 
-static uint64_t
-check_size(uint8_t bits_per_byte, uint32_t bmp_size, file_t *in_file) {
+static uint32_t
+get_required_bytes(uint8_t bits_per_byte, uint32_t bmp_size, uint32_t file_size) {
 
-    if (bmp_size < (in_file->size * sizeof(uint8_t) / bits_per_byte)) {
-        fprintf(stderr, "Cannot embed, file size is not big enough");
+    uint32_t required_bytes = file_size * sizeof(uint8_t) / bits_per_byte;
+
+    if (bmp_size < required_bytes) {
+        fprintf(stderr, "Cannot embed, file body_size is not big enough");
         return 0;
     }
 
-    return 1;
+    return required_bytes;
 }

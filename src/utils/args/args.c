@@ -86,22 +86,22 @@ usage(char *progname) {
             "NAME\n"
             "\t%s – análisis y ocultación de información mediante esteganografía\n\n"
             "SYNOPSIS\n"
-            "\t%s -embed -in file -p in_file -out out_file -steg_algorithm steg_algorithm [-a steg_algorithm] [-m mode] [-pass password]\n\n"
-            "\t%s -extract -p in_file -out out_file -steg_algorithm steg_algorithm [-a steg_algorithm] [-m mode] [-pass password]\n\n"
+            "\t%s -embed -in file -p in_file -out out_file -steg steg_algorithm [-a enc_algorithm] [-m mode] [-pass password]\n\n"
+            "\t%s -extract -p in_file -out out_file -steg steg_algorithm [-a enc_algorithm] [-m mode] [-pass password]\n\n"
             "DESCRIPTION\n"
             "\t%s permite ocultar un archivo cualquiera en un archivo .bmp, mediante un método de esteganografiado elegido, con o sin password.\n"
             "\tTambién permite estegoanaliczar un archivo .bmp para determinar si tiene un archivo incrustado, con qué algoritmo y lo extraiga correctamente.\n\n"
             "\t-embed                 Indica que se va a ocultar información.\n\n"
             "\t-extract               Indica que se va a extraer información.\n"
             "\t-in file               Archivo que se va a ocultar.\n\n"
-            "\t-p bitmap_file          Archivo bmp que será el portador.\n\n"
+            "\t-p bitmap_file         Archivo bmp que será el portador.\n\n"
             "\t-out bitmap_file       Archivo bmp de salida\n"
-            "\t                        con la información de file incrustada.\n\n"
-            "\t-steg_algorithm steg_algorithm        Algoritmo de esteganografiado, valores posibles:\n"
+            "\t                       con la información de file incrustada.\n\n"
+            "\t-steg steg_algorithm    Algoritmo de esteganografiado, valores posibles:\n"
             "\t                        -   LSB1: LSB de 1bit\n"
             "\t                        -   LSB4: LSB de 4 bits\n"
             "\t                        -   LSBI: LSB Enhanced\n"
-            "\t-a steg_algorithm            Algoritmo de encripcion, valores posibles:\n"
+            "\t-a enc_algorithm        Algoritmo de encripcion, valores posibles:\n"
             "\t                        -   aes128\n"
             "\t                        -   aes192\n"
             "\t                        -   aes256\n"
@@ -129,7 +129,7 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
                 {"embed",   no_argument,       0, 0xD001},
                 {"in",      required_argument, 0, 0xD002},
                 {"out",     required_argument, 0, 0xD003},
-                {"steg_algorithm",    required_argument, 0, 0xD004},
+                {"steg",    required_argument, 0, 0xD004},
                 {"pass",    required_argument, 0, 0xD005},
                 {"extract", no_argument,       0, 0xD006},
                 {"log",     no_argument,       0, 0xD007},
@@ -198,8 +198,8 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
     }
 
     if (args->embed) {
-        if (!args->in_file || !args->carrier || !args->out_file || !args->steg) {
-            fprintf(stderr, "embed missing required arguments:");
+        if (!args->in_file || !args->carrier || !args->out_file || args->steg < 0) {
+            fprintf(stderr, "embed missing required arguments: ");
             if (!args->in_file) {
                 fprintf(stderr, "-in ");
             }
@@ -209,24 +209,24 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
             if (!args->out_file) {
                 fprintf(stderr, "-out ");
             }
-            if (!args->steg) {
-                fprintf(stderr, "-steg_algorithm ");
+            if (args->steg < 0) {
+                fprintf(stderr, "-steg");
             }
             fprintf(stderr, "\n");
             exit(1);
         }
     } else {
         if (!args->carrier) {
-            if (!args->in_file || !args->carrier || !args->out_file || !args->steg) {
-                fprintf(stderr, "extract missing required arguments:");
+            if (!args->in_file || !args->carrier || !args->out_file || args->steg < 0) {
+                fprintf(stderr, "extract missing required arguments: ");
                 if (!args->carrier) {
                     fprintf(stderr, "-p ");
                 }
                 if (!args->out_file) {
                     fprintf(stderr, "-out ");
                 }
-                if (!args->steg) {
-                    fprintf(stderr, "-steg_algorithm ");
+                if (args->steg < 0) {
+                    fprintf(stderr, "-steg");
                 }
                 fprintf(stderr, "\n");
                 exit(1);
@@ -241,7 +241,7 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
               "\tin_file: %s\n"
               "\tcarrier: %s\n"
               "\tout_file: %s\n"
-              "\tsteg_algorithm: %s\n"
+              "\tsteg: %s\n"
               "\tenc: %s\n"
               "\tmode: %s\n"
               "\tpass: %s\n",

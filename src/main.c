@@ -18,15 +18,18 @@ int main(int argc, char *argv[]) {
     I_O_resources_t resources;
     open_I_O_resources(&resources, args);
 
-//    if (args.embed) {
-//        if (embed(args.steg, bmp, resources) < 0) {
-//            return -1;
-//        }
-//    } else {
-//        if (extract(args.steg, bmp, resources) < 0) {
-//            return -1;
-//        }
-//    }
+    if (args.embed) {
+        if (embed(args.steg, bmp, resources) < 0) {
+            return -1;
+        }
+        if (generate_embedded_bmp(bmp, resources) < 0) {
+            return -1;
+        }
+    } else {
+        if (extract(args.steg, bmp, resources) < 0) {
+            return -1;
+        }
+    }
 
     free_bmp(bmp);
     close_I_O_resources(&resources);
