@@ -116,7 +116,7 @@ usage(char *progname) {
 
     exit(1);
 }
-
+//FIXME: LOS ENUMS CUANDO PASO ALGO NO VALIDO EXPLOTA PORQUE -1 DA EL MAS CHICO
 void parse_args(int argc, char **argv, stegobmp_args_t *args) {
     memset(args, 0, sizeof(*args));
     log_set_quiet(true);

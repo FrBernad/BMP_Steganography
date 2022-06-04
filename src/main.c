@@ -11,32 +11,40 @@ int main(int argc, char *argv[]) {
     parse_args(argc, argv, &args);
 
     bmp_t *bmp = create_bmp(args.carrier);
+    int return_val = 0;
     if (bmp == NULL) {
-        return -1;
+        return_val = -1;
+        goto finally;
     }
-    //FIXME: GOTO JUAN
+    //FIXME: OJO OFFSET DEL BMP
     I_O_resources_t resources;
     open_I_O_resources(&resources, args);
 
     if (args.embed) {
         if (embed(args.steg, bmp, resources) < 0) {
-            return -1;
+            return_val = -1;
+            goto finally;
         }
         if (generate_embedded_bmp(bmp, resources) < 0) {
-            return -1;
+            return_val = -1;
+            goto finally;
         }
     } else {
         if (extract(args.steg, bmp, resources) < 0) {
-            return -1;
+            return_val = -1;
+            goto finally;
         }
         if (generate_extracted_file(resources.extracted_data) < 0) {
-            return -1;
+            return_val = -1;
+            goto finally;
         }
     }
+
+    finally:
 
     free_bmp(bmp);
     close_I_O_resources(&resources);
 
-    return 0;
+    return return_val;
 }
 
