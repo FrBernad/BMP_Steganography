@@ -6,29 +6,29 @@
 #include <stdlib.h> /* for exit */
 #include <string.h> /* memset */
 
-static const char *steg_strings[] = {
+static char *steg_strings[] = {
         "LSB1", "LSB4", "LSBI"
 };
 
-static const char *enc_strings[] = {
+static char *enc_strings[] = {
         "AES_128", "AES_192", "AES_256", "DES"
 };
 
-static const char *chain_mode_strings[] = {
+static char *chain_mode_strings[] = {
         "ECB", "CFB", "OFB", "CBC"
 };
 
-const char *
+char *
 steg_algorithm_string(int steg) {
     return steg_strings[steg];
 }
 
-const char *
+char *
 enc_algorithm_string(int enc) {
     return enc_strings[enc];
 }
 
-const char *
+char *
 chain_mode_string(int chain_mode) {
     return chain_mode_strings[chain_mode];
 }
@@ -37,9 +37,9 @@ static enc_algorithm_t
 get_enc(char *enc) {
     if (strcmp("aes128", enc) == 0) {
         return AES_128;
-    } else if (strcmp("aes192", enc) == 0) {
+    } else if (strcmp("aes-192", enc) == 0) {
         return AES_192;
-    } else if (strcmp("aes256", enc) == 0) {
+    } else if (strcmp("aes-256", enc) == 0) {
         return AES_256;
     } else if (strcmp("des", enc) == 0) {
         return DES;
@@ -90,13 +90,13 @@ usage(char *progname) {
             "\t%s -extract -p in_file -out out_file -steg steg_algorithm [-a enc_algorithm] [-m mode] [-pass password]\n\n"
             "DESCRIPTION\n"
             "\t%s permite ocultar un archivo cualquiera en un archivo .bmp, mediante un método de esteganografiado elegido, con o sin password.\n"
-            "\tTambién permite estegoanaliczar un archivo .bmp para determinar si tiene un archivo incrustado, con qué algoritmo y lo extraiga correctamente.\n\n"
-            "\t-embed                 Indica que se va a ocultar información.\n\n"
-            "\t-extract               Indica que se va a extraer información.\n"
-            "\t-in file               Archivo que se va a ocultar.\n\n"
-            "\t-p bitmap_file         Archivo bmp que será el portador.\n\n"
-            "\t-out bitmap_file       Archivo bmp de salida\n"
-            "\t                       con la información de file incrustada.\n\n"
+            "\tTambién permite estegoanalizar un archivo .bmp para determinar si tiene un archivo incrustado, con qué algoritmo y lo extraiga correctamente.\n\n"
+            "\t-embed                  Indica que se va a ocultar información.\n\n"
+            "\t-extract                Indica que se va a extraer información.\n"
+            "\t-in file                Archivo que se va a ocultar.\n\n"
+            "\t-p bitmap_file          Archivo bmp que será el portador.\n\n"
+            "\t-out bitmap_file        Archivo bmp de salida\n"
+            "\t                        con la información de file incrustada.\n\n"
             "\t-steg steg_algorithm    Algoritmo de esteganografiado, valores posibles:\n"
             "\t                        -   LSB1: LSB de 1bit\n"
             "\t                        -   LSB4: LSB de 4 bits\n"
@@ -111,11 +111,12 @@ usage(char *progname) {
             "\t                        -   cfb\n"
             "\t                        -   ofb\n"
             "\t                        -   cbc\n"
-            "\t-pass password         Password de encripción\n\n",
+            "\t-pass password          Password de encripción\n\n",
             progname, progname, progname, progname);
 
     exit(1);
 }
+
 //FIXME: LOS ENUMS CUANDO PASO ALGO NO VALIDO EXPLOTA PORQUE -1 DA EL MAS CHICO
 void parse_args(int argc, char **argv, stegobmp_args_t *args) {
     memset(args, 0, sizeof(*args));
@@ -198,7 +199,7 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
     }
 
     if (args->embed) {
-        if (!args->in_file || !args->carrier || !args->out_file || args->steg < 0) {
+        if (!args->in_file || !args->carrier || !args->out_file || !args->steg) {
             fprintf(stderr, "embed missing required arguments: ");
             if (!args->in_file) {
                 fprintf(stderr, "-in ");
@@ -209,7 +210,7 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
             if (!args->out_file) {
                 fprintf(stderr, "-out ");
             }
-            if (args->steg < 0) {
+            if (!args->steg) {
                 fprintf(stderr, "-steg");
             }
             fprintf(stderr, "\n");

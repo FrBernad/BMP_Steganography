@@ -3,9 +3,9 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "utils/I_O/I_O.h"
 #include "utils/logger/logger.h"
+#include "utils/encryption/encryption.h"
 #include "bmp_factory/bmp_factory.h"
 
 #define REAL_SIZE_BYTES 4
@@ -53,6 +53,7 @@ open_I_O_resources(I_O_resources_t *resources, stegobmp_args_t args) {
         const char *extension = get_filename_ext(args.in_file);
         size_t extension_size = get_extension_size(extension);
         resources->stego_data->size = REAL_SIZE_BYTES + file_size + extension_size;
+
         resources->stego_data->data = malloc(sizeof(uint8_t) * resources->stego_data->size);
         if (resources->stego_data->data == NULL) {
             log_error("memory error");
@@ -76,7 +77,15 @@ open_I_O_resources(I_O_resources_t *resources, stegobmp_args_t args) {
         }
 
         memcpy(resources->stego_data->data + REAL_SIZE_BYTES + file_size, extension, sizeof(uint8_t) * extension_size);
-
+        uint8_t *cyphertext = NULL;
+        if (args.enc) {
+            if (encrypt_data(resources->stego_data->data, (int) resources->stego_data->size, (uint8_t *) args.pass,
+                             enc_algorithm_string(args.enc), chain_mode_string(args.mode), &cyphertext) < 0) {
+                log_error("encryption error");
+                close_I_O_resources(resources);
+                return -1;
+            }
+        }
         close(in_file_fd);
     } else {
         resources->extracted_data = calloc(1, sizeof(extracted_data_t));
