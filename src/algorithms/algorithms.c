@@ -8,47 +8,47 @@ enum bits_per_byte {
 };
 
 static int
-LSB1_embed(bmp_t *bmp, I_O_resources_t resources);
+LSB1_embed(bmp_t *bmp, I_O_resources_t *resources);
 
 static int
-LSB1_extract(bmp_t *bmp, I_O_resources_t resources);
+LSB1_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted);
 
 static int
-LSB4_embed(bmp_t *bmp, I_O_resources_t resources);
+LSB4_embed(bmp_t *bmp, I_O_resources_t *resources);
 
 static int
-LSB4_extract(bmp_t *bmp, I_O_resources_t resources);
+LSB4_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted);
 
 static int
-LSBI_embed(bmp_t *bmp, I_O_resources_t resources);
+LSBI_embed(bmp_t *bmp, I_O_resources_t *resources);
 
 static int
-LSBI_extract(bmp_t *bmp, I_O_resources_t resources);
+LSBI_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted);
 
 static uint32_t
 get_required_bytes(uint8_t bits_per_byte, uint32_t bmp_size, uint32_t file_size);
 
-static int (*embed_algorithms[3])(bmp_t *bmp, I_O_resources_t resources) = {
+static int (*embed_algorithms[3])(bmp_t *bmp, I_O_resources_t *resources) = {
         LSB1_embed, LSB4_embed, LSBI_embed
 };
 
-static int (*extract_algorithms[3])(bmp_t *bmp, I_O_resources_t resources) = {
+static int (*extract_algorithms[3])(bmp_t *bmp, I_O_resources_t *resources, bool encrypted) = {
         LSB1_extract, LSB4_extract, LSBI_extract
 };
 
 int
-embed(steg_algorithm_t algorithm, bmp_t *bmp, I_O_resources_t resources) {
+embed(steg_algorithm_t algorithm, bmp_t *bmp, I_O_resources_t *resources) {
     return embed_algorithms[algorithm - 1](bmp, resources);
 }
 
 int
-extract(steg_algorithm_t algorithm, bmp_t *bmp, I_O_resources_t resources) {
-    return extract_algorithms[algorithm - 1](bmp, resources);
+extract(steg_algorithm_t algorithm, bmp_t *bmp, I_O_resources_t *resources, bool encrypted) {
+    return extract_algorithms[algorithm - 1](bmp, resources, encrypted);
 }
 
 static int
-LSB1_embed(bmp_t *bmp, I_O_resources_t resources) {
-    stego_data_t *stego_data = resources.stego_data;
+LSB1_embed(bmp_t *bmp, I_O_resources_t *resources) {
+    stego_data_t *stego_data = resources->stego_data;
     uint32_t required_bytes = get_required_bytes(LSB1_BITS, bmp->info_header.image_size, stego_data->size);
     if (!required_bytes) {
         return -1;
@@ -67,7 +67,7 @@ LSB1_embed(bmp_t *bmp, I_O_resources_t resources) {
 }
 
 static int
-LSB1_extract(bmp_t *bmp, I_O_resources_t resources) {
+LSB1_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted) {
 
     // Extract size of the file
     uint32_t real_size_bytes = 8 * sizeof(uint32_t) / LSB1_BITS;
@@ -86,12 +86,12 @@ LSB1_extract(bmp_t *bmp, I_O_resources_t resources) {
     uint32_t real_body_bytes = 8 * real_size / LSB1_BITS;
     uint8_t *body_ptr = bmp->pixel_array + real_size_bytes;
 
-    if (init_extracted_data(real_size, resources.extracted_data) < 0) {
+    if (init_extracted_data(real_size, resources->extracted_data) < 0) {
         return -1;
     }
 
     for (uint32_t i = 0, k = 0, j = 8; i < real_body_bytes; i++) {
-        resources.extracted_data->body[k] |= ((uint8_t) (body_ptr[i] & 0x01)) << (j - 1);
+        resources->extracted_data->body[k] |= ((uint8_t) (body_ptr[i] & 0x01)) << (j - 1);
         j--;
         if (j == 0) {
             k++;
@@ -99,28 +99,31 @@ LSB1_extract(bmp_t *bmp, I_O_resources_t resources) {
         }
     }
 
-    // Extract extension of the file
-    uint8_t *ext = body_ptr + real_body_bytes;
-    uint8_t parsed_ext = 0;
+    if (!encrypted) {
+        // Extract extension of the file
+        uint8_t *ext = body_ptr + real_body_bytes;
+        uint8_t parsed_ext = 0;
 
-    for (uint32_t i = 0, k = 0, j = 8; !parsed_ext; i++) {
-        resources.extracted_data->extension[k] |= ((uint8_t) (ext[i] & 0x01)) << (j - 1);
-        j--;
-        if (j == 0) {
-            if (resources.extracted_data->extension[k] == 0) {
-                parsed_ext = 1;
+        for (uint32_t i = 0, k = 0, j = 8; !parsed_ext; i++) {
+            resources->extracted_data->extension[k] |= ((uint8_t) (ext[i] & 0x01)) << (j - 1);
+            j--;
+            if (j == 0) {
+                if (resources->extracted_data->extension[k] == 0) {
+                    parsed_ext = 1;
+                }
+                k++;
+                j = 8;
             }
-            k++;
-            j = 8;
         }
     }
+
 
     return 1;
 }
 
 static int
-LSB4_embed(bmp_t *bmp, I_O_resources_t resources) {
-    stego_data_t *stego_data = resources.stego_data;
+LSB4_embed(bmp_t *bmp, I_O_resources_t *resources) {
+    stego_data_t *stego_data = resources->stego_data;
     uint32_t required_bytes = get_required_bytes(LSB4_BITS, bmp->info_header.image_size, stego_data->size);
     if (!required_bytes) {
         return -1;
@@ -139,16 +142,11 @@ LSB4_embed(bmp_t *bmp, I_O_resources_t resources) {
 }
 
 static int
-LSB4_extract(bmp_t *bmp, I_O_resources_t resources) {
+LSB4_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted) {
     // Extract size of the file
     uint32_t real_size_bytes = 8 * sizeof(uint32_t) / LSB4_BITS;
     uint32_t real_size = 0;
-    // Extract size of the file
-    //4D 01 00 00
-    //01001101 00000001 00000000 00000000
-    //00000100 -> 01000000
-    //00 00 01 4D
-    //00000000 00000000 00000001 01001101
+
     for (uint32_t i = 0, k = 0, j = 2; i < real_size_bytes; ++i) {
         real_size |= (((uint32_t) (bmp->pixel_array[i] & 0x0F)) << (8 * k + (j - 1) * 4));
         j--;
@@ -162,12 +160,12 @@ LSB4_extract(bmp_t *bmp, I_O_resources_t resources) {
     uint32_t real_body_bytes = 8 * real_size / LSB4_BITS;
     uint8_t *body_ptr = bmp->pixel_array + real_size_bytes;
 
-    if (init_extracted_data(real_size, resources.extracted_data) < 0) {
+    if (init_extracted_data(real_size, resources->extracted_data) < 0) {
         return -1;
     }
 
     for (uint32_t i = 0, k = 0, j = 2; i < real_body_bytes; i++) {
-        resources.extracted_data->body[k] |= ((uint8_t) (body_ptr[i] & 0x0F)) << ((j - 1) * 4);
+        resources->extracted_data->body[k] |= ((uint8_t) (body_ptr[i] & 0x0F)) << ((j - 1) * 4);
         j--;
         if (j == 0) {
             k++;
@@ -175,19 +173,21 @@ LSB4_extract(bmp_t *bmp, I_O_resources_t resources) {
         }
     }
 
-    // Extract extension of the file
-    uint8_t *ext = body_ptr + real_body_bytes;
-    uint8_t parsed_ext = 0;
+    if (!encrypted) {
+        // Extract extension of the file
+        uint8_t *ext = body_ptr + real_body_bytes;
+        uint8_t parsed_ext = 0;
 
-    for (uint32_t i = 0, k = 0, j = 2; !parsed_ext; i++) {
-        resources.extracted_data->extension[k] |= ((uint8_t) (ext[i] & 0x0F)) << ((j - 1) * 4);
-        j--;
-        if (j == 0) {
-            if (resources.extracted_data->extension[k] == 0) {
-                parsed_ext = 1;
+        for (uint32_t i = 0, k = 0, j = 2; !parsed_ext; i++) {
+            resources->extracted_data->extension[k] |= ((uint8_t) (ext[i] & 0x0F)) << ((j - 1) * 4);
+            j--;
+            if (j == 0) {
+                if (resources->extracted_data->extension[k] == 0) {
+                    parsed_ext = 1;
+                }
+                k++;
+                j = 2;
             }
-            k++;
-            j = 2;
         }
     }
 
@@ -195,8 +195,8 @@ LSB4_extract(bmp_t *bmp, I_O_resources_t resources) {
 }
 
 static int
-LSBI_embed(bmp_t *bmp, I_O_resources_t resources) {
-    stego_data_t *stego_data = resources.stego_data;
+LSBI_embed(bmp_t *bmp, I_O_resources_t *resources) {
+    stego_data_t *stego_data = resources->stego_data;
     uint32_t required_bytes = get_required_bytes(LSBI_BITS, bmp->info_header.image_size, stego_data->size);
 
     if (!required_bytes) {
@@ -207,7 +207,7 @@ LSBI_embed(bmp_t *bmp, I_O_resources_t resources) {
 }
 
 static int
-LSBI_extract(bmp_t *bmp, I_O_resources_t resources) {
+LSBI_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted) {
     return 1;
 }
 

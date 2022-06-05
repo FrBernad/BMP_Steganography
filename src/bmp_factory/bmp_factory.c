@@ -72,14 +72,16 @@ create_bmp(const char *file_name) {
 
 void
 free_bmp(bmp_t *bmp) {
-    if (bmp->pixel_array) {
-        free(bmp->pixel_array);
+    if (bmp) {
+        if (bmp->pixel_array) {
+            free(bmp->pixel_array);
+        }
+        if (bmp->raw_file_header) {
+            free(bmp->raw_file_header);
+        }
+        if (bmp->raw_info_header) {
+            free(bmp->raw_info_header);
+        }
+        free(bmp);
     }
-    if (bmp->raw_file_header) {
-        free(bmp->raw_file_header);
-    }
-    if (bmp->raw_info_header) {
-        free(bmp->raw_info_header);
-    }
-    free(bmp);
 }

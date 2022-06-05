@@ -11,26 +11,26 @@ static char *steg_strings[] = {
 };
 
 static char *enc_strings[] = {
-        "AES_128", "AES_192", "AES_256", "DES"
+        "aes_128", "aes_192", "aes_256", "des"
 };
 
 static char *chain_mode_strings[] = {
-        "ECB", "CFB", "OFB", "CBC"
+        "ecb", "cfb", "ofb", "cbc"
 };
 
 char *
 steg_algorithm_string(int steg) {
-    return steg_strings[steg];
+    return steg_strings[steg - 1];
 }
 
 char *
 enc_algorithm_string(int enc) {
-    return enc_strings[enc];
+    return enc_strings[enc - 1];
 }
 
 char *
 chain_mode_string(int chain_mode) {
-    return chain_mode_strings[chain_mode];
+    return chain_mode_strings[chain_mode - 1];
 }
 
 static enc_algorithm_t
@@ -253,7 +253,7 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
               args->out_file,
               steg_algorithm_string(args->steg),
               enc_algorithm_string(args->enc),
-              chain_mode_strings[args->mode],
+              chain_mode_string(args->mode),
               args->pass ? args->pass : "None"
     );
 }

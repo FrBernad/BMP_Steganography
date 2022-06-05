@@ -23,14 +23,14 @@ typedef struct I_O_resources {
     stego_data_t *stego_data;
 } I_O_resources_t;
 
-int
-open_I_O_resources(I_O_resources_t *resources, stegobmp_args_t args);
+I_O_resources_t *
+open_I_O_resources(stegobmp_args_t args);
 
 int
-generate_embedded_bmp(bmp_t *bmp, I_O_resources_t resources);
+generate_embedded_bmp(bmp_t *bmp, I_O_resources_t *resources);
 
 int
-generate_extracted_file(extracted_data_t *extracted_data);
+generate_extracted_file(extracted_data_t *extracted_data, stegobmp_args_t args);
 
 int
 init_extracted_data(uint32_t size, extracted_data_t *extracted_data);

@@ -20,12 +20,12 @@ EXTRA_FLAGS := -DLOG_USE_COLOR
 #OPTIMIZATION := O3
 W_NO := -Wno-unused-parameter -Wno-newline-eof -Wno-implicit-fallthrough -Wno-unused-command-line-argument
 W := -Wextra -Werror -Wall
-export LIBRARY_FLAGS := -lcrypto -lmath -v
+export LIBRARY_FLAGS := -lcrypto -lm -v
 export CFLAGS := $(W) $(W_NO) $(STD) $(EXTRA_FLAGS) $(DEBUG_MEMORY)
 
 # MAIN DIRECTIVES
 all:
-	echo $(OBJ_FILES)
+	@echo $(LDFLAGS)
 	cd $(SRC_DIR) && $(MAKE)
 
 # CLEAN DIRECTIVES
