@@ -248,12 +248,12 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
               "\tpass: %s\n",
               args->embed ? "true" : "false",
               args->extract ? "true" : "false",
-              args->in_file ? args->in_file : "None",
+              args->in_file ? args->in_file : "none",
               args->carrier,
               args->out_file,
               steg_algorithm_string(args->steg),
-              enc_algorithm_string(args->enc),
-              chain_mode_string(args->mode),
-              args->pass ? args->pass : "None"
+              args->enc ? enc_algorithm_string(args->enc) : "none",
+              args->mode ? chain_mode_string(args->mode) : "none",
+              args->pass ? args->pass : "none"
     );
 }

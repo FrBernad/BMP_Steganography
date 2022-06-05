@@ -7,6 +7,7 @@
 
 bmp_t *
 create_bmp(const char *file_name) {
+
     int bmp_fd = open(file_name, O_RDONLY);
     if (bmp_fd == -1) {
         log_error("unable to open %s\n", file_name);
@@ -72,6 +73,7 @@ create_bmp(const char *file_name) {
 
 void
 free_bmp(bmp_t *bmp) {
+
     if (bmp) {
         if (bmp->pixel_array) {
             free(bmp->pixel_array);

@@ -73,11 +73,11 @@ LSB1_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted) {
     uint32_t real_size_bytes = 8 * sizeof(uint32_t) / LSB1_BITS;
     uint32_t real_size = 0;
 
-    for (uint32_t i = 0, k = 0, j = 8; i < real_size_bytes; ++i) {
+    for (uint32_t i = 0, k = 3, j = 8; i < real_size_bytes; ++i) {
         real_size |= (((uint32_t) (bmp->pixel_array[i] & 0x01)) << (8 * k + (j - 1)));
         j--;
         if (j == 0) {
-            k++;
+            k--;
             j = 8;
         }
     }
@@ -143,15 +143,16 @@ LSB4_embed(bmp_t *bmp, I_O_resources_t *resources) {
 
 static int
 LSB4_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted) {
+
     // Extract size of the file
     uint32_t real_size_bytes = 8 * sizeof(uint32_t) / LSB4_BITS;
     uint32_t real_size = 0;
 
-    for (uint32_t i = 0, k = 0, j = 2; i < real_size_bytes; ++i) {
+    for (uint32_t i = 0, k = 3, j = 2; i < real_size_bytes; ++i) {
         real_size |= (((uint32_t) (bmp->pixel_array[i] & 0x0F)) << (8 * k + (j - 1) * 4));
         j--;
         if (j == 0) {
-            k++;
+            k--;
             j = 2;
         }
     }
