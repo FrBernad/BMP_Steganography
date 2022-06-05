@@ -136,6 +136,7 @@ close_I_O_resources(I_O_resources_t *resources) {
             if (resources->extracted_data->file_name) {
                 free(resources->extracted_data->file_name);
             }
+            free(resources->extracted_data);
         }
         free(resources);
     }
