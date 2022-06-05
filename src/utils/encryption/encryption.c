@@ -36,7 +36,7 @@ encrypt_data(uint8_t *plaintext, int plaintext_len, uint8_t *password,
     }
 
     /* Initialise the encryption operation. */
-    if (EVP_EncryptInit_ex(ctx, EVP_get_cipherbyname((char *) ciphername), NULL, key, iv) != 1) {
+    if (EVP_EncryptInit_ex(ctx, EVP_get_cipherbyname((char *) cipher_name_and_mode), NULL, key, iv) != 1) {
         log_error("encryption error");
         return -1;
     }
@@ -65,6 +65,7 @@ encrypt_data(uint8_t *plaintext, int plaintext_len, uint8_t *password,
 
     /* Clean up */
     EVP_CIPHER_CTX_free(ctx);
+    free(cipher_name_and_mode);
 
     return ciphertext_len;
 }
@@ -95,7 +96,7 @@ decrypt(uint8_t *ciphertext, int ciphertext_len, uint8_t *password,
     }
 
     /* Initialise the decryption operation. */
-    if (!EVP_DecryptInit_ex(ctx, EVP_get_cipherbyname((char *) ciphername), NULL, key, iv)) {
+    if (!EVP_DecryptInit_ex(ctx, EVP_get_cipherbyname((char *) cipher_name_and_mode), NULL, key, iv)) {
         return -1;
     }
 
@@ -118,6 +119,7 @@ decrypt(uint8_t *ciphertext, int ciphertext_len, uint8_t *password,
 
     /* Clean up */
     EVP_CIPHER_CTX_free(ctx);
+    free(cipher_name_and_mode);
 
     if (ret > 0) {
         /* Success */

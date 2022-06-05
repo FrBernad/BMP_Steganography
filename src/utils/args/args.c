@@ -11,7 +11,7 @@ static char *steg_strings[] = {
 };
 
 static char *enc_strings[] = {
-        "aes_128", "aes_192", "aes_256", "des"
+        "aes-128", "aes-192", "aes-256", "des"
 };
 
 static char *chain_mode_strings[] = {
@@ -37,9 +37,9 @@ static enc_algorithm_t
 get_enc(char *enc) {
     if (strcmp("aes128", enc) == 0) {
         return AES_128;
-    } else if (strcmp("aes-192", enc) == 0) {
+    } else if (strcmp("aes192", enc) == 0) {
         return AES_192;
-    } else if (strcmp("aes-256", enc) == 0) {
+    } else if (strcmp("aes256", enc) == 0) {
         return AES_256;
     } else if (strcmp("des", enc) == 0) {
         return DES;
