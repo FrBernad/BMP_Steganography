@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
         }
     } else {
         if (extract(args.steg, bmp, resources, args.enc > 0) < 0) {
+            fprintf(stderr, "error extracting file from %s\n", args.carrier);
             return_val = -1;
             goto finally;
         }
