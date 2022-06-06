@@ -14,17 +14,25 @@ encrypt_data(uint8_t *plaintext, int plaintext_len, uint8_t *password,
              char *ciphername, char *mode, uint8_t **ciphertext) {
 
     uint8_t *cipher_name_and_mode = calloc(strlen(mode) + strlen(ciphername) + 2, sizeof(uint8_t));
+    if (cipher_name_and_mode == NULL) {
+        log_error("memory error");
+        return -1;
+    }
+
     strcpy((char *) cipher_name_and_mode, ciphername);
     strcat(strcat((char *) cipher_name_and_mode, "-"), mode);
 
     *ciphertext = calloc((int) ceil(((double) plaintext_len / 16) + 1) * 18, sizeof(uint8_t));
     if (*ciphertext == NULL) {
+        free(cipher_name_and_mode);
         log_error("memory error");
         return -1;
     }
 
     uint8_t key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     if (generate_iv_and_key(password, cipher_name_and_mode, (uint8_t *) DEFAULT_DIGEST, key, iv) < 0) {
+        free(cipher_name_and_mode);
+        free(*ciphertext);
         return -1;
     }
 
@@ -32,12 +40,16 @@ encrypt_data(uint8_t *plaintext, int plaintext_len, uint8_t *password,
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
         log_error("encryption error");
+        free(cipher_name_and_mode);
+        free(*ciphertext);
         return -1;
     }
 
     /* Initialise the encryption operation. */
     if (EVP_EncryptInit_ex(ctx, EVP_get_cipherbyname((char *) cipher_name_and_mode), NULL, key, iv) != 1) {
         log_error("encryption error");
+        free(cipher_name_and_mode);
+        free(*ciphertext);
         return -1;
     }
 
@@ -49,6 +61,8 @@ encrypt_data(uint8_t *plaintext, int plaintext_len, uint8_t *password,
      */
     if (EVP_EncryptUpdate(ctx, *ciphertext, &len, plaintext, plaintext_len) != 1) {
         log_error("encryption error");
+        free(cipher_name_and_mode);
+        free(*ciphertext);
         return -1;
     }
     int ciphertext_len = len;
@@ -59,6 +73,8 @@ encrypt_data(uint8_t *plaintext, int plaintext_len, uint8_t *password,
      */
     if (EVP_EncryptFinal_ex(ctx, *ciphertext + len, &len) != 1) {
         log_error("encryption error");
+        free(cipher_name_and_mode);
+        free(*ciphertext);
         return -1;
     }
     ciphertext_len += len;
@@ -75,6 +91,11 @@ decrypt(uint8_t *ciphertext, int ciphertext_len, uint8_t *password,
         char *ciphername, char *mode, uint8_t **plaintext) {
 
     uint8_t *cipher_name_and_mode = calloc(strlen(mode) + strlen(ciphername) + 2, sizeof(uint8_t));
+    if (cipher_name_and_mode == NULL) {
+        log_error("memory error");
+        return -1;
+    }
+
     strcpy((char *) cipher_name_and_mode, ciphername);
     strcat(strcat((char *) cipher_name_and_mode, "-"), mode);
 
@@ -86,17 +107,26 @@ decrypt(uint8_t *ciphertext, int ciphertext_len, uint8_t *password,
 
     uint8_t key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     if (generate_iv_and_key(password, cipher_name_and_mode, (uint8_t *) DEFAULT_DIGEST, key, iv) < 0) {
+        log_error("decryption error");
+        free(cipher_name_and_mode);
+        free(*plaintext);
         return -1;
     }
 
     /* Create and initialise the context */
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
+        log_error("decryption error");
+        free(cipher_name_and_mode);
+        free(*plaintext);
         return -1;
     }
 
     /* Initialise the decryption operation. */
     if (!EVP_DecryptInit_ex(ctx, EVP_get_cipherbyname((char *) cipher_name_and_mode), NULL, key, iv)) {
+        log_error("decryption error");
+        free(cipher_name_and_mode);
+        free(*plaintext);
         return -1;
     }
 
@@ -107,6 +137,9 @@ decrypt(uint8_t *ciphertext, int ciphertext_len, uint8_t *password,
     int len;
     int ret;
     if (!EVP_DecryptUpdate(ctx, *plaintext, &len, ciphertext, ciphertext_len)) {
+        log_error("decryption error");
+        free(cipher_name_and_mode);
+        free(*plaintext);
         return -1;
     }
     int plaintext_len = len;
@@ -126,7 +159,9 @@ decrypt(uint8_t *ciphertext, int ciphertext_len, uint8_t *password,
         plaintext_len += len;
         return plaintext_len;
     } else {
+        log_error("decryption error");
         /* Verify failed */
+        free(*plaintext);
         return -1;
     }
 }

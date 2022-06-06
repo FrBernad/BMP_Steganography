@@ -61,6 +61,13 @@ generate_embedded_bmp(bmp_t *bmp, I_O_resources_t *resources) {
         return -1;
     }
 
+    if (bmp->file_header.offset) {
+        if (write(resources->out_fd, bmp->raw_offset, bmp->file_header.offset) < 0) {
+            log_error("unable to write output offset");
+            return -1;
+        }
+    }
+
     if (write(resources->out_fd, bmp->pixel_array, bmp->info_header.image_size) < 0) {
         log_error("unable to write output pixel_array");
         return -1;
@@ -77,7 +84,6 @@ generate_extracted_file(extracted_data_t *extracted_data, stegobmp_args_t args) 
                                           (int) extracted_data->body_size, (uint8_t *) args.pass,
                                           enc_algorithm_string(args.enc), chain_mode_string(args.mode), &plaintext);
         if (decrypted_data_size < 0) {
-            log_error("decryption error");
             return -1;
         }
         parse_file(extracted_data, plaintext);
@@ -85,11 +91,13 @@ generate_extracted_file(extracted_data_t *extracted_data, stegobmp_args_t args) 
     }
 
     char *extracted_filename = strcat((char *) extracted_data->file_name, (char *) extracted_data->extension);
+
     int out_file_fd = open(extracted_filename, O_RDWR | O_CREAT | O_TRUNC, 0775);
     if (out_file_fd == -1) {
         log_error("unable to create out file %s", extracted_filename);
         return -1;
     }
+
     if (write(out_file_fd, extracted_data->body, extracted_data->body_size) < 0) {
         log_error("unable to write output file body");
         return -1;
@@ -102,6 +110,7 @@ int
 init_extracted_data(uint32_t size, extracted_data_t *extracted_data) {
 
     extracted_data->body_size = size;
+
     extracted_data->body = calloc(size, sizeof(uint8_t));
     if (extracted_data->body == NULL) {
         log_error("memory allocation error");
@@ -169,9 +178,10 @@ generate_extract_resources(I_O_resources_t *resources, stegobmp_args_t args) {
 
 static int
 generate_embed_resources(I_O_resources_t *resources, stegobmp_args_t args) {
+
     int out_file_fd = open(args.out_file, O_RDWR | O_CREAT | O_TRUNC, 0775);
     if (out_file_fd == -1) {
-        log_error("Unable to create out file %s", args.out_file);
+        log_error("unable to create out file %s", args.out_file);
         return -1;
     }
     resources->out_fd = out_file_fd;
@@ -223,7 +233,6 @@ generate_embed_resources(I_O_resources_t *resources, stegobmp_args_t args) {
                                                (uint8_t *) args.pass, enc_algorithm_string(args.enc),
                                                chain_mode_string(args.mode), &cyphertext);
         if (encrypted_data_size < 0) {
-            log_error("encryption error");
             return -1;
         }
         free(resources->stego_data->data);
