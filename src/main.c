@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
         return_val = -1;
         goto finally;
     }
-    //FIXME: OJO OFFSET DEL BMP
+
     resources = open_I_O_resources(args);
     if (resources == NULL) {
         return_val = -1;

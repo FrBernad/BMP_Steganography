@@ -35,6 +35,7 @@ typedef struct bmp {
     uint8_t *raw_file_header;
     bmp_info_header_t info_header;
     uint8_t *raw_info_header;
+    uint8_t *raw_offset;
     uint8_t *pixel_array;
 } bmp_t;
 
