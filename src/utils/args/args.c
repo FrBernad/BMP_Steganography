@@ -35,6 +35,7 @@ chain_mode_string(int chain_mode) {
 
 static enc_algorithm_t
 get_enc(char *enc) {
+
     if (strcmp("aes128", enc) == 0) {
         return AES_128;
     } else if (strcmp("aes192", enc) == 0) {
@@ -50,6 +51,7 @@ get_enc(char *enc) {
 
 static chain_mode_t
 get_mode(char *enc) {
+
     if (strcmp("ecb", enc) == 0) {
         return ECB;
     } else if (strcmp("cfb", enc) == 0) {
@@ -65,6 +67,7 @@ get_mode(char *enc) {
 
 static steg_algorithm_t
 get_steg(char *enc) {
+
     if (strcmp("LSB1", enc) == 0) {
         return LSB1;
     } else if (strcmp("LSB4", enc) == 0) {
@@ -72,6 +75,7 @@ get_steg(char *enc) {
     } else if (strcmp("LSBI", enc) == 0) {
         return LSBI;
     }
+
     return -1;
 }
 
@@ -117,7 +121,6 @@ usage(char *progname) {
     exit(1);
 }
 
-//FIXME: LOS ENUMS CUANDO PASO ALGO NO VALIDO EXPLOTA PORQUE -1 DA EL MAS CHICO
 void parse_args(int argc, char **argv, stegobmp_args_t *args) {
     memset(args, 0, sizeof(*args));
     log_set_quiet(true);
@@ -149,9 +152,17 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
                 break;
             case 'a':
                 args->enc = get_enc(optarg);
+                if ((int) args->enc < 0) {
+                    fprintf(stderr, "invalid encoding algorithm\n");
+                    exit(1);
+                }
                 break;
             case 'm':
                 args->mode = get_mode(optarg);
+                if ((int) args->mode < 0) {
+                    fprintf(stderr, "invalid encoding chain mode\n");
+                    exit(1);
+                }
                 break;
             case 'v':
                 version();
@@ -167,6 +178,10 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
                 break;
             case 0xD004:
                 args->steg = get_steg(optarg);
+                if ((int) args->steg < 0) {
+                    fprintf(stderr, "invalid steg algorithm\n");
+                    exit(1);
+                }
                 break;
             case 0xD005:
                 args->pass = optarg;
@@ -218,7 +233,7 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
         }
     } else {
         if (!args->carrier) {
-            if (!args->in_file || !args->carrier || !args->out_file || args->steg < 0) {
+            if (!args->in_file || !args->carrier || !args->out_file || !args->steg) {
                 fprintf(stderr, "extract missing required arguments: ");
                 if (!args->carrier) {
                     fprintf(stderr, "-p ");
@@ -252,8 +267,8 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
               args->carrier,
               args->out_file,
               steg_algorithm_string(args->steg),
-              args->enc ? enc_algorithm_string(args->enc) : "none",
-              args->mode ? chain_mode_string(args->mode) : "none",
+              (int) args->enc ? enc_algorithm_string(args->enc) : "none",
+              (int) args->mode ? chain_mode_string(args->mode) : "none",
               args->pass ? args->pass : "none"
     );
 }
