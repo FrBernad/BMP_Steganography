@@ -119,6 +119,10 @@ LSB1_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted) {
         uint8_t parsed_ext = 0;
 
         for (uint32_t i = 0, k = 0, j = 8; !parsed_ext; i++) {
+            if (k >= MAX_EXTENSION_SIZE) {
+                return -1;
+            }
+
             resources->extracted_data->extension[k] |= ((uint8_t) (ext[i] & 0x01)) << (j - 1);
             j--;
             if (j == 0) {
@@ -199,6 +203,10 @@ LSB4_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted) {
         uint8_t parsed_ext = 0;
 
         for (uint32_t i = 0, k = 0, j = 2; !parsed_ext; i++) {
+            if (k >= MAX_EXTENSION_SIZE) {
+                return -1;
+            }
+
             resources->extracted_data->extension[k] |= ((uint8_t) (ext[i] & 0x0F)) << ((j - 1) * 4);
             j--;
             if (j == 0) {
@@ -334,6 +342,10 @@ LSBI_extract(bmp_t *bmp, I_O_resources_t *resources, bool encrypted) {
         uint8_t parsed_ext = 0;
 
         for (uint32_t i = 0, k = 0, j = 8; !parsed_ext; i++) {
+            if (k >= MAX_EXTENSION_SIZE) {
+                return -1;
+            }
+
             uint8_t combination = (ext[i] >> 1) & 0x03;
             uint8_t current_byte = ext[i];
 

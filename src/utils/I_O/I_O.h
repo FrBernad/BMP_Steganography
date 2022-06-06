@@ -5,6 +5,10 @@
 #include "utils/args/args.h"
 #include "bmp_factory/bmp_factory.h"
 
+#define REAL_SIZE_BYTES 4
+#define MAX_EXTENSION_SIZE 10
+#define MAX_FILENAME_SIZE 50
+
 typedef struct extracted_data {
     uint8_t *body;
     uint8_t *extension;
