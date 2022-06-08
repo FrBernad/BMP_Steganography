@@ -191,7 +191,7 @@ void parse_args(int argc, char **argv, stegobmp_args_t *args) {
                 break;
             case 0xD007:
                 log_set_quiet(false);
-                log_debug("logs enabled\n");
+                log_debug("logs enabled");
                 break;
             default:
                 fprintf(stderr, "unknown argument %d.\n", c);
