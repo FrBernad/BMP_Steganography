@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
         }
         if (generate_extracted_file(resources->extracted_data, args) < 0) {
             return_val = -1;
+            fprintf(stderr, "error generating extracted file from %s\n", args.carrier);
             goto finally;
         }
     }

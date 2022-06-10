@@ -14,8 +14,8 @@ get_filename_ext(const char *filename);
 static size_t
 get_extension_size(const char *extension);
 
-static
-void parse_file(extracted_data_t *extracted_data, uint8_t *plaintext);
+static int
+parse_file(extracted_data_t *extracted_data, uint8_t *plaintext);
 
 static int
 generate_extract_resources(I_O_resources_t *resources, stegobmp_args_t args);
@@ -78,11 +78,15 @@ generate_extracted_file(extracted_data_t *extracted_data, stegobmp_args_t args) 
     if (args.enc > 0) {
         int decrypted_data_size = decrypt(extracted_data->body,
                                           (int) extracted_data->body_size, (uint8_t *) args.pass,
-                                          enc_algorithm_string(args.enc), chain_mode_string(args.mode), &plaintext);
+                                          enc_algorithm_string(args.enc), chain_mode_string(args.mode),
+                                          &plaintext);
         if (decrypted_data_size < 0) {
             return -1;
         }
-        parse_file(extracted_data, plaintext);
+        if (parse_file(extracted_data, plaintext) < 0) {
+            free(plaintext);
+            return -1;
+        }
         free(plaintext);
     }
 
@@ -260,12 +264,16 @@ get_extension_size(const char *extension) {
     return strlen(extension) + 1;
 }
 
-static void
+static int
 parse_file(extracted_data_t *extracted_data, uint8_t *plaintext) {
 
     uint32_t file_len = 0;
     for (uint32_t i = 0, k = 3; i < REAL_SIZE_BYTES; i++, k--) {
         file_len |= (((uint32_t) plaintext[i]) << (8 * k));
+    }
+
+    if (file_len > extracted_data->body_size) {
+        return -1;
     }
 
     extracted_data->body_size = file_len;
@@ -277,10 +285,14 @@ parse_file(extracted_data_t *extracted_data, uint8_t *plaintext) {
     uint8_t *ext = body_ptr + extracted_data->body_size;
     bool parsed_ext = false;
     for (uint32_t i = 0; !parsed_ext; i++) {
+        if (i >= MAX_EXTENSION_SIZE) {
+            return -1;
+        }
         extracted_data->extension[i] = ext[i];
         if (ext[i] == 0) {
             parsed_ext = true;
         }
     }
 
+    return 1;
 }
