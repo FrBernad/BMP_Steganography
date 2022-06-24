@@ -9,6 +9,10 @@ Embed and extract files inside .bmp using the following steganography strategies
 - LSB4
 - LSBI
 
+## Requirements
+- [C Compiler](https://gcc.gnu.org/)
+- [OpenSSL](https://www.openssl.org/)
+
 ## Setup
 
 On the src project folder run the command `make`. This will compile and generate the executable stegobmp.
